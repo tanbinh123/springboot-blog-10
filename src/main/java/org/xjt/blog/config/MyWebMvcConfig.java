@@ -23,7 +23,6 @@ public class MyWebMvcConfig extends WebMvcConfigurerAdapter {
 
     @Bean
     public CorsFilter corsFilter() {
-
         //创建CorsConfiguration对象后添加配置
         CorsConfiguration config = new CorsConfiguration();
         //设置放行哪些原始域
