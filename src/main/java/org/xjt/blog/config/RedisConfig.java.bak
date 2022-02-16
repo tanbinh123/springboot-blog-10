@@ -26,9 +26,6 @@ public class RedisConfig extends CachingConfigurerSupport {
     @Value("${spring.redis.port}")
     private int port;
 
-    @Value("${spring.redis.timeout}")
-    private int timeout;
-
     /**
      * 选择redis作为默认缓存工具
      * @param redisConnectionFactory

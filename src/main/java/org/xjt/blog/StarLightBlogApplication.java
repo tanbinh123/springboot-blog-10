@@ -10,8 +10,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class StarLightBlogApplication {
     public static void main( String[] args ) {
         SpringApplication.run(StarLightBlogApplication.class,args);
-        log.warn("登录星光后台api测试端口  http://localhost:8000/");
-        log.warn("登录星光后台管理  http://localhost:8001/");
-        log.warn("登录星光前台页面  http://localhost:8002/");
+        log.warn("登录小熊博客后台api测试端口  http://localhost:8000/");
+        log.warn("登录小熊博客后台管理  http://localhost:8001/");
+        log.warn("登录小熊博客前台页面  http://localhost:8002/");
     }
 }

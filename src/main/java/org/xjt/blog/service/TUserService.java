@@ -27,4 +27,7 @@ public interface TUserService {
     RespBean updateByUid(TUser tUser);
 
     RespBean deleteUserById(String id);
+
+    RespBean getUserListByName(String name);
+
 }

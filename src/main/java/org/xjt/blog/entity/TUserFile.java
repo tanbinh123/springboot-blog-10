@@ -10,12 +10,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("t_user_file")
-public class TUserFile {
+public class TUserFile implements Serializable {
     @TableId(type = IdType.ID_WORKER)
     @JsonSerialize(using = ToStringSerializer.class)
     private Long id;

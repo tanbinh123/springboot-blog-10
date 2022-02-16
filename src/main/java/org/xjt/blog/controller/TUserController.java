@@ -42,6 +42,13 @@ public class TUserController {
         return tUserService.getAllUser();
     }
 
+    //按用户名模糊搜索
+    @ResponseBody
+    @GetMapping("/getByName")
+    public RespBean getUserListByName(@RequestParam("name") String name){
+        return tUserService.getUserListByName(name);
+    }
+
     //博主登录
     @PostMapping("/login")
     @ResponseBody

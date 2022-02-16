@@ -1,5 +1,6 @@
 package org.xjt.blog.service;
 
+import org.springframework.web.multipart.MultipartFile;
 import org.xjt.blog.entity.TUserFile;
 import org.xjt.blog.utils.RespBean;
 
@@ -26,4 +27,6 @@ public interface TUserFileService {
     RespBean queryFileByCondition(Integer current, Integer pageSize, String type, String user_id);
 
     RespBean backGetAllNum();
+
+    RespBean uploadImageToOss(MultipartFile file);
 }

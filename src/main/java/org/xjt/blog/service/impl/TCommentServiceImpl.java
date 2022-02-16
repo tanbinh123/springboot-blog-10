@@ -7,6 +7,7 @@ import org.springframework.util.ObjectUtils;
 import org.xjt.blog.entity.TComment;
 import org.xjt.blog.mapper.TCommentMapper;
 import org.xjt.blog.service.TCommentService;
+import org.xjt.blog.utils.RedisUtils;
 import org.xjt.blog.utils.RespBean;
 
 import java.util.ArrayList;
@@ -18,6 +19,9 @@ import java.util.Map;
 public class TCommentServiceImpl implements TCommentService {
     @Autowired
     private TCommentMapper tCommentMapper;
+
+    @Autowired
+    private RedisUtils redisUtils;
 
     //存放迭代找出的所有子代回复的集合
     private List<Map<String, Object>> tempReplys = new ArrayList<>();
@@ -88,7 +92,18 @@ public class TCommentServiceImpl implements TCommentService {
 
     @Override
     public RespBean getAllComments() {
-        List<Map<String,String>> commentList = tCommentMapper.getAllComments();
+        boolean exists = redisUtils.exists("blog-blogsCountByType");
+        List<Map<String,String>> commentList = null;
+
+        if(!exists || ObjectUtils.isEmpty(redisUtils.get("allComments"))){
+            System.out.println("--------->从数据库中获取数据");
+            commentList = tCommentMapper.getAllComments();
+            redisUtils.set("blog-allComments",commentList);
+        }else{
+            System.out.println("============>从redis中获取数据");
+            commentList = (List<Map<String,String>>)redisUtils.get("allComments");
+        }
+
         if(ObjectUtils.isEmpty(commentList)){
             return RespBean.error("error");
         }else{

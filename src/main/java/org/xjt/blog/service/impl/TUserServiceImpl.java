@@ -104,4 +104,20 @@ public class TUserServiceImpl implements TUserService {
             return RespBean.error(e.getMessage());
         }
     }
+
+    @Override
+    public RespBean getUserListByName(String name) {
+        QueryWrapper<TUser> wrapper = new QueryWrapper<>();
+        wrapper.like("username",name)
+                .or()
+                .like("nickname",name);
+
+        List<TUser> userList = tUserMapper.selectList(wrapper);
+
+        if(ObjectUtils.isEmpty(userList)){
+            return RespBean.warn("没有找到");
+        }else{
+            return RespBean.ok("ok",userList);
+        }
+    }
 }

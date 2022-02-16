@@ -1,6 +1,7 @@
 package org.xjt.blog.service.impl;
 
 import cn.hutool.core.date.DateTime;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,6 +21,7 @@ import org.xjt.blog.entity.TBlogTags;
 import org.xjt.blog.mapper.TBlogMapper;
 import org.xjt.blog.mapper.TBlogTagsMapper;
 import org.xjt.blog.service.TBlogService;
+import org.xjt.blog.utils.RedisUtils;
 import org.xjt.blog.utils.RespBean;
 
 import java.time.LocalDateTime;
@@ -34,34 +36,45 @@ public class TBlogServiceImpl implements TBlogService {
     @Autowired
     private TBlogTagsMapper tBlogTagsMapper;
 
+    @Autowired
+    private RedisUtils redisUtils;
+
+
     @Override
-    //@Cacheable(value = "blogsByPage", key = "#current")
     public RespBean getBlogsByPage(Integer current, Integer size, Boolean published, String flag, Boolean share_statement, Boolean is_delete) {
         Page<TBlog> tBlogPage = new Page<>(current, size);
-
         QueryWrapper<TBlog> wrapper = new QueryWrapper<>();
-        if (published != null) {
-            wrapper.eq("published", published);
-        }
-        if (flag != null) {
-            wrapper.eq("flag", flag);
-        }
-        if (share_statement != null) {
-            wrapper.eq("share_statement", share_statement);
-        }
-        if (is_delete != null) {
-            wrapper.eq("is_delete", is_delete);
-        }
-        wrapper.orderByDesc("update_time");
+        IPage<TBlog> tBlogIPage = null;
 
-        IPage<TBlog> tBlogIPage = tBlogMapper.selectPage(tBlogPage, wrapper);
-        List<TBlog> tBlogList = tBlogIPage.getRecords();        //每页数据的List集合
+        boolean exists = redisUtils.exists("blog-blogsByPage");
 
-        if(ObjectUtils.isEmpty(tBlogList)){
-            return RespBean.warn("数据库还没有博客，快去创建一篇博客吧");
+        if(current > 1 || !exists || ObjectUtils.isEmpty(redisUtils.get("blog-blogsByPage"))){
+            System.out.println("------------>从数据库中查询");
+            if (published != null) {
+                wrapper.eq("published", published);
+            }
+            if (flag != null) {
+                wrapper.eq("flag", flag);
+            }
+            if (share_statement != null) {
+                wrapper.eq("share_statement", share_statement);
+            }
+            if (is_delete != null) {
+                wrapper.eq("is_delete", is_delete);
+            }
+            wrapper.orderByDesc("update_time");
+
+            tBlogIPage = tBlogMapper.selectPage(tBlogPage, wrapper);
+            System.out.println(tBlogIPage);
+
+            redisUtils.set("blog-blogsByPage", tBlogIPage);
         }else{
-            return RespBean.ok("ok",tBlogIPage);
+            System.out.println("============>从redis中获取数据");
+            tBlogIPage = (IPage<TBlog>)redisUtils.get("blog-blogsByPage");
         }
+
+        return RespBean.ok("ok",tBlogIPage);
+
     }
 
 
@@ -224,7 +237,7 @@ public class TBlogServiceImpl implements TBlogService {
     public RespBean getBlogAllCounts() {
         Integer count = tBlogMapper.selectCount(null);
 
-        if (count < 0) {
+        if (count <= 0) {
             return RespBean.error("查询失败...");
         } else {
             return RespBean.ok("ok",count);
@@ -254,7 +267,18 @@ public class TBlogServiceImpl implements TBlogService {
 
     @Override
     public RespBean getBlogCountsByType() {
-        List<Map<String, Integer>> ret = tBlogMapper.getBlogCountsGroupByType();
+        boolean exists = redisUtils.exists("blog-blogsCountByType");
+        List<Map<String, Integer>> ret = null;
+
+        if(!exists || ObjectUtils.isEmpty(redisUtils.get("blog-blogsCountByType"))){
+            System.out.println("--------->从数据库中获取数据");
+            ret = tBlogMapper.getBlogCountsGroupByType();
+            redisUtils.set("blog-blogsCountByType",ret);
+        }else{
+            System.out.println("============>从redis中获取数据");
+            ret = (List<Map<String, Integer>>)redisUtils.get("blog-blogsCountByType");
+        }
+
         if(ObjectUtils.isEmpty(ret)){
             return RespBean.error("查询失败");
         }else{
@@ -267,7 +291,8 @@ public class TBlogServiceImpl implements TBlogService {
         QueryWrapper<TBlog> wrapper = new QueryWrapper<>();
         wrapper.select("title");
         List<TBlog> blogList = tBlogMapper.selectList(wrapper);
-        ArrayList<Map<String, Object>> objects = new ArrayList<>();
+
+        List<Map<String, Object>> wordsList = null;
 
         for (TBlog blog : blogList) {
             String title = blog.getTitle();
@@ -275,24 +300,20 @@ public class TBlogServiceImpl implements TBlogService {
             JiebaSegmenter segmenter = new JiebaSegmenter();
             List<SegToken> tokenList = segmenter.process(title, JiebaSegmenter.SegMode.INDEX);
 
-            tokenList.forEach(item ->{
+            tokenList.forEach(item -> {
                 String s = item.toString().substring(1, item.toString().length() - 1);
                 String name = s.split(",")[0];
                 String startOffset = s.split(",")[1].trim();
                 String endOffset = s.split(",")[2].trim();
-                Integer val = (Integer.valueOf(startOffset) + Integer.valueOf(endOffset)) / 2;
+                Integer val = Integer.valueOf(endOffset);
 
                 Map<String, Object> map = new HashMap<>();
-                map.put("name",name);
-                map.put("value",val);
-                objects.add(map);
+                map.put("name", name);
+                map.put("value", val);
+                wordsList.add(map);
             });
         }
-        System.out.println(objects);
-        if(ObjectUtils.isEmpty(objects)){
-            return RespBean.error("error");
-        }else{
-            return RespBean.ok("ok",objects);
-        }
+
+        return RespBean.ok("ok",wordsList);
     }
 }

@@ -39,6 +39,10 @@ public class TUserFileController {
     @Autowired
     private TUserMapper tUserMapper;
 
+    @PostMapping("/aliyun/oss")
+    public RespBean uploadFile(@RequestParam("file") MultipartFile file){
+        return tUserFileService.uploadImageToOss(file);
+    }
     // 上传文件(已登录的用户)
     //1、文件保存到本地服务器上
     //2、文件信息保存到数据库记录上

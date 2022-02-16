@@ -64,10 +64,10 @@ public class ShiroConfig {
         customerRealm.setCredentialsMatcher(hashedCredentialsMatcher);
 
         //开启缓存管理器
-        customerRealm.setCachingEnabled(true);
-        customerRealm.setAuthorizationCachingEnabled(true);
-        customerRealm.setAuthorizationCachingEnabled(true);
-        customerRealm.setCacheManager(new EhCacheManager());
+//        customerRealm.setCachingEnabled(true);
+//        customerRealm.setAuthorizationCachingEnabled(true);
+//        customerRealm.setAuthorizationCachingEnabled(true);
+//        customerRealm.setCacheManager(new EhCacheManager());
 
         return customerRealm;
     }
